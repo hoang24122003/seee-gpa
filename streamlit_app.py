@@ -3,7 +3,10 @@ import numpy as np
 import joblib
 
 st.set_page_config(page_title="Dự đoán kết quả học tập", layout="centered")
-st.title(":blue[DỰ ĐOÁN KẾT QUẢ HỌC TẬP SINH VIÊN]")
+st.markdown(
+    "<h3 style='color: blue;'>DỰ ĐOÁN KẾT QUẢ HỌC TẬP SINH VIÊN</h3>",
+    unsafe_allow_html=True
+)
 
 # =============================
 # 1. Sidebar chọn loại sinh viên
