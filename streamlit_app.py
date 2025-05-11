@@ -22,7 +22,7 @@ current_semester = st.sidebar.selectbox("Kỳ hiện tại:", list(range(1, max_
 gpa_inputs, tc_inputs = [], []
 for i in range(1, current_semester + 1):
     gpa = st.sidebar.number_input(f"GPA kỳ {i}", min_value=0.0, max_value=4.0, step=0.01, format="%.2f")
-    tc = st.sidebar.number_input(f"Tín chỉ kỳ {i}", min_value=0, max_value=28, step=1)
+    tc = st.sidebar.number_input(f"Tín chỉ kỳ {i}", min_value=0, max_value=30, step=1)
     gpa_inputs.append(gpa)
     tc_inputs.append(tc)
 
@@ -34,8 +34,8 @@ else:
         # Chuẩn bị feature vector
         input_features = np.array(gpa_inputs + tc_inputs).reshape(1, -1)
         model_prefix = student_type.split()[0]  # '8' hoặc '10'
-        # Tạo key matching dict keys: 'GPA_1', 'GPA_1_2', ..., 'GPA_1_2_3'...
-        group_key = 'GPA_' + '_'.join(str(i) for i in range(1, current_semester + 1))
+                # Tạo key matching dict keys: 'GPA_TC_1', 'GPA_TC_1_2', ..., 'GPA_TC_1_2_...'
+        group_key = 'GPA_TC_' + '_'.join(str(i) for i in range(1, current_semester + 1))
 
         # =============================
         # Dự đoán Final CPA
