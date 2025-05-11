@@ -56,7 +56,7 @@ else:
             model_cpa = cpa_dict[group_key_cpa]['model']
             expected_len = len(scaler_cpa.mean_)
             if input_data.shape[1] != expected_len:
-                st.error(f"❌ Số lượng đặc trưng ({input_data.shape[1]}) không khớp với mô hình ({expected_len}).")
+                st.error(f"❌ Final CPA: Số đặc trưng ({input_data.shape[1]}) không khớp mô hình ({expected_len})")
             else:
                 predicted_cpa = model_cpa.predict(scaler_cpa.transform(input_data))[0]
                 st.subheader("🎓 Dự đoán CPA tốt nghiệp:")
@@ -66,7 +66,7 @@ else:
         # 4. Dự đoán GPA kỳ tiếp theo
         # =============================
         if current_semester < max_semester:
-            group_key_gpa = f"GPA_{current_semester + 1}"
+            group_key_gpa = f"GPA_{current_semester + 1}"  # Chú ý: đúng key theo file joblib đã lưu
             next_gpa_path = f"models_streamlit/next_gpa_tc_{model_prefix}_ki.joblib"
             next_dict = joblib.load(next_gpa_path)
 
@@ -77,7 +77,7 @@ else:
                 model_next = next_dict[group_key_gpa]['model']
                 expected_len_next = len(scaler_next.mean_)
                 if input_data.shape[1] != expected_len_next:
-                    st.error(f"❌ Số lượng đặc trưng ({input_data.shape[1]}) không khớp với mô hình ({expected_len_next}).")
+                    st.error(f"❌ GPA kỳ tiếp theo: Số đặc trưng ({input_data.shape[1]}) không khớp mô hình ({expected_len_next})")
                 else:
                     predicted_next_gpa = model_next.predict(scaler_next.transform(input_data))[0]
                     st.subheader(f"📘 Dự đoán GPA kỳ {current_semester + 1}:")
