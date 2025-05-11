@@ -50,7 +50,7 @@ else:
         cpa_dict = joblib.load(cpa_model_path)
 
         scaler_cpa = cpa_dict[group_key_cpa]['scaler']
-        model_cpa = cpa_dict[group_key_cpa]['svr']
+        model_cpa = cpa_dict[group_key_cpa]['model']
         predicted_cpa = model_cpa.predict(scaler_cpa.transform(input_data))[0]
 
         st.subheader("🎓 Dự đoán CPA tốt nghiệp:")
