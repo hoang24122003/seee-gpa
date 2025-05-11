@@ -9,75 +9,68 @@ st.markdown(
 )
 
 # =============================
-# Load models trước để xác định các kỳ khả dụng
-# =============================
-# Chọn loại sinh viên và xác định prefix để load đúng file
-student_type = st.sidebar.selectbox("Loại sinh viên:", ("8 kỳ", "10 kỳ"))
-prefix = '8' if student_type == '8 kỳ' else '10'
-
-# Load model Final CPA dict
-path_cpa = f"models_streamlit/final_cpa_{prefix}_ki.joblib"
-try:
-    cpa_dict = joblib.load(path_cpa)
-except Exception as e:
-    st.error(f"❌ Không thể load model CPA: {e}")
-    st.stop()
-
-# Xác định số kỳ khả dụng từ key của cpa_dict (ví dụ 'GPA_TC_1_2' -> 2 kỳ)
-term_counts = {k: len(k.split('_'))-2 for k in cpa_dict.keys()}
-available_terms = sorted(set(term_counts.values()))
-# =============================
-# Sidebar: Chọn kỳ hiện tại dựa vào model khả dụng
+# 1. Sidebar chọn loại sinh viên
 # =============================
 st.sidebar.subheader("Cài đặt đầu vào")
-current_semester = st.sidebar.selectbox("Kỳ hiện tại:", available_terms)
+student_type = st.sidebar.selectbox("Loại sinh viên:", ("8 kỳ", "10 kỳ"))
+max_semester = 6 if student_type == "8 kỳ" else 8
 
-# Sinh key đúng theo lựa chọn
-# Lấy key tương ứng với current_semester
-group_key = next(k for k,v in term_counts.items() if v == current_semester)
+# Chọn kỳ hiện tại
+current_semester = st.sidebar.selectbox("Kỳ hiện tại:", list(range(1, max_semester + 1)))
 
-# Nhập GPA và Tín chỉ cho mỗi kỳ
+# Nhập GPA & Tín chỉ từ kỳ 1 đến kỳ hiện tại
 gpa_inputs = []
-credit_inputs = []
+tc_inputs = []  # thêm list để lưu tín chỉ
 for i in range(1, current_semester + 1):
-    gpa = st.sidebar.number_input(
-        f"GPA kỳ {i}", min_value=0.0, max_value=4.0, step=0.01, format="%.2f"
-    )
-    credit = st.sidebar.number_input(
-        f"Tín chỉ kỳ {i}", min_value=1, max_value=30, step=1
-    )
+    gpa = st.sidebar.number_input(f"GPA kỳ {i}", min_value=0.0, max_value=4.0, step=0.01, format="%.2f")
     gpa_inputs.append(gpa)
-    credit_inputs.append(credit)
 
-# Kiểm tra nhập đủ
-if any(val is None for val in gpa_inputs+credit_inputs):
-    st.warning("⚠️ Vui lòng nhập đủ GPA và tín chỉ.")
+    tc = st.sidebar.number_input(f"Tín chỉ kỳ {i}", min_value=1, max_value=28, step=1, format="%d")
+    tc_inputs.append(tc)
+
+# =============================
+# 2. Xử lý đầu vào và dự đoán
+# =============================
+if any(g == 0.0 for g in gpa_inputs) or any(tc == 0 for tc in tc_inputs):
+    st.warning("⚠️ Vui lòng nhập đầy đủ GPA và Tín chỉ cho tất cả các kỳ đã chọn.")
 else:
     try:
-        # Chuẩn bị dữ liệu
-        X = np.array(gpa_inputs + credit_inputs).reshape(1, -1)
+        input_data = np.array(gpa_inputs).reshape(1, -1)
+        model_prefix = student_type.split()[0]  # '8' hoặc '10'
 
-        # Dự đoán Final CPA
+        # Định danh nhóm
+        group_key = f"GPA_1_{current_semester}" if current_semester > 1 else "GPA_1"
+
+        # =============================
+        # 3. Dự đoán Final CPA
+        # =============================
+        cpa_model_path = f"models_streamlit/final_cpa_tc_{model_prefix}_ki.joblib"
+        cpa_dict = joblib.load(cpa_model_path)
+
         scaler_cpa = cpa_dict[group_key]['scaler']
-        model_cpa  = cpa_dict[group_key]['model']
-        Xc = scaler_cpa.transform(X)
-        cpa_pred = model_cpa.predict(Xc)[0]
-        st.subheader("🎓 Dự đoán CPA tốt nghiệp")
-        st.success(f"Final CPA: {cpa_pred:.2f}")
+        model_cpa = cpa_dict[group_key]['svr']  # hoặc 'rf'
 
-        # Dự đoán GPA kỳ tiếp theo nếu có model
-        # Load next_gpa dict
-        path_gpa = f"models_streamlit/next_gpa_{prefix}_ki.joblib"
-        gpa_dict = joblib.load(path_gpa)
-        if group_key in gpa_dict:
-            scaler_gpa = gpa_dict[group_key]['scaler']
-            model_gpa  = gpa_dict[group_key]['model']
-            Xg = scaler_gpa.transform(X)
-            gpa_pred = model_gpa.predict(Xg)[0]
-            st.subheader(f"📘 Dự đoán GPA kỳ {current_semester+1}")
-            st.info(f"GPA dự đoán: {gpa_pred:.2f}")
-    except KeyError as ke:
-        available = ', '.join(cpa_dict.keys())
-        st.error(f"❌ Key '{ke.args[0]}' không tồn tại. Các key khả dụng: {available}")
+        input_scaled_cpa = scaler_cpa.transform(input_data)
+        predicted_cpa = model_cpa.predict(input_scaled_cpa)[0]
+
+        st.subheader("🎓 Dự đoán CPA tốt nghiệp:")
+        st.success(f"Final CPA: {predicted_cpa:.2f}")
+
+        # =============================
+        # 4. Dự đoán GPA kỳ tiếp theo
+        # =============================
+        if current_semester < max_semester:
+            next_gpa_path = f"models_streamlit/next_gpa_tc_{model_prefix}_ki.joblib"
+            next_dict = joblib.load(next_gpa_path)
+
+            scaler_next = next_dict[group_key]['scaler']
+            model_next = next_dict[group_key]['svr']
+
+            input_scaled_next = scaler_next.transform(input_data)
+            predicted_next_gpa = model_next.predict(input_scaled_next)[0]
+
+            st.subheader(f"📘 Dự đoán GPA kỳ {current_semester + 1}:")
+            st.info(f"GPA dự đoán: {predicted_next_gpa:.2f}")
+
     except Exception as e:
-        st.error(f"❌ Lỗi khi dự đoán: {e}")
+        st.error(f"❌ Đã xảy ra lỗi khi dự đoán: {e}")
