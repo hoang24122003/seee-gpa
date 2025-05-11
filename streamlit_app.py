@@ -66,7 +66,7 @@ else:
         # 4. Dự đoán GPA kỳ tiếp theo
         # =============================
         if current_semester < max_semester:
-            group_key_gpa = f"GPA_TC_1_{current_semester + 1}"
+            group_key_gpa = f"GPA_{current_semester + 1}"
             next_gpa_path = f"models_streamlit/next_gpa_tc_{model_prefix}_ki.joblib"
             next_dict = joblib.load(next_gpa_path)
 
