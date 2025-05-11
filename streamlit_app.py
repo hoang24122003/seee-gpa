@@ -16,36 +16,43 @@ student_type = st.sidebar.selectbox("Loại sinh viên:", ("8 kỳ", "10 kỳ"))
 max_semester = 6 if student_type == "8 kỳ" else 8
 
 # Chọn kỳ hiện tại
-current_semester = st.sidebar.selectbox("Kỳ hiện tại:", list(range(1, max_semester + 1)))
+t_current = list(range(1, max_semester + 1))
+current_semester = st.sidebar.selectbox("Kỳ hiện tại:", t_current)
 
 # Nhập GPA và tín chỉ từ kỳ 1 đến kỳ hiện tại
 gpa_inputs, tc_inputs = [], []
 for i in range(1, current_semester + 1):
-    gpa = st.sidebar.number_input(f"GPA kỳ {i}", min_value=0.0, max_value=4.0, step=0.01, format="%.2f")
-    tc = st.sidebar.number_input(f"Tín chỉ kỳ {i}", min_value=0, max_value=30, step=1)
+    gpa = st.sidebar.number_input(
+        label=f"GPA kỳ {i}", min_value=0.0, max_value=4.0, step=0.01, format="%.2f"
+    )
+    tc = st.sidebar.number_input(
+        label=f"Tín chỉ kỳ {i}", min_value=0, max_value=28, step=1
+    )
     gpa_inputs.append(gpa)
     tc_inputs.append(tc)
 
 # Kiểm tra nhập liệu
-if any(g == 0.0 for g in gpa_inputs) or any(t == 0 for t in tc_inputs):
+if len(gpa_inputs) < current_semester or len(tc_inputs) < current_semester or \
+   any(g is None for g in gpa_inputs) or any(t is None for t in tc_inputs):
     st.warning("⚠️ Vui lòng nhập đầy đủ GPA và tín chỉ cho tất cả các kỳ đã chọn.")
 else:
     try:
         # Chuẩn bị feature vector
         input_features = np.array(gpa_inputs + tc_inputs).reshape(1, -1)
         model_prefix = student_type.split()[0]  # '8' hoặc '10'
-                # Tạo key matching dict keys: 'GPA_TC_1', 'GPA_TC_1_2', ..., 'GPA_TC_1_2_...'
-        group_key = 'GPA_TC_' + '_'.join(str(i) for i in range(1, current_semester + 1))
+
+        # Tạo group_key khớp với dict lưu model: 'GPA_TC_1', 'GPA_TC_1_2', ...
+        semesters = list(range(1, current_semester + 1))
+        group_key = "GPA_TC_" + "_".join(map(str, semesters))
 
         # =============================
         # Dự đoán Final CPA
         # =============================
         cpa_model_path = f"models_streamlit/final_cpa_tc_{model_prefix}_ki.joblib"
         cpa_dict = joblib.load(cpa_model_path)
-        # Lấy scaler và model từ nested dict theo group_key
+        # Lấy scaler và model theo group_key
         scaler_cpa = cpa_dict[group_key]['scaler']
         model_cpa  = cpa_dict[group_key]['model']
-
         input_scaled_cpa = scaler_cpa.transform(input_features)
         predicted_cpa = model_cpa.predict(input_scaled_cpa)[0]
 
@@ -60,7 +67,6 @@ else:
             next_dict = joblib.load(next_gpa_path)
             scaler_next = next_dict[group_key]['scaler']
             model_next  = next_dict[group_key]['model']
-
             input_scaled_next = scaler_next.transform(input_features)
             predicted_next_gpa = model_next.predict(input_scaled_next)[0]
 
@@ -69,6 +75,6 @@ else:
 
     except KeyError as ke:
         available = ', '.join(cpa_dict.keys())
-        st.error(f"❌ Key '{ke.args[0]}' không tồn tại. Các key khả dụng: {available}")
+        st.error(f"❌ Key '{ke.args[0]}' không tồn tại trong model CPA. Các key khả dụng: {available}")
     except Exception as e:
         st.error(f"❌ Đã xảy ra lỗi khi dự đoán: {e}")
