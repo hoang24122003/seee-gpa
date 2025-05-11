@@ -65,7 +65,7 @@ else:
             next_dict = joblib.load(next_gpa_path)
 
             scaler_next = next_dict[group_key_gpa]['scaler']
-            model_next = next_dict[group_key_gpa]['svr']
+            model_next = next_dict[group_key_gpa]['model']
             predicted_next_gpa = model_next.predict(scaler_next.transform(input_data))[0]
 
             st.subheader(f"📘 Dự đoán GPA kỳ {current_semester + 1}:")
