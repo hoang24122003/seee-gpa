@@ -22,7 +22,7 @@ current_semester = st.sidebar.selectbox("Kỳ hiện tại:", list(range(1, max_
 gpa_inputs, tc_inputs = [], []
 for i in range(1, current_semester + 1):
     gpa = st.sidebar.number_input(f"GPA kỳ {i}", min_value=0.0, max_value=4.0, step=0.01, format="%.2f")
-    tc = st.sidebar.number_input(f"Tín chỉ kỳ {i}", min_value=0, max_value=30, step=1)
+    tc = st.sidebar.number_input(f"Tín chỉ kỳ {i}", min_value=0, max_value=28, step=1)
     gpa_inputs.append(gpa)
     tc_inputs.append(tc)
 
@@ -43,7 +43,7 @@ else:
         # =============================
         # 3. Dự đoán Final CPA
         # =============================
-        cpa_model_path = f"models_streamlit/final_cpa_{model_prefix}_ki.joblib"
+        cpa_model_path = f"models_streamlit/final_cpa_tc_{model_prefix}_ki.joblib"
         cpa_dict = joblib.load(cpa_model_path)
 
         scaler_cpa = cpa_dict[group_key]['scaler']
@@ -59,7 +59,7 @@ else:
         # 4. Dự đoán GPA kỳ tiếp theo
         # =============================
         if current_semester < max_semester:
-            next_gpa_path = f"models_streamlit/next_gpa_{model_prefix}_ki.joblib"
+            next_gpa_path = f"models_streamlit/next_gpa_tc_{model_prefix}_ki.joblib"
             next_dict = joblib.load(next_gpa_path)
 
             scaler_next = next_dict[group_key]['scaler']
