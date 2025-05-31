@@ -13,7 +13,7 @@ st.markdown(
 # =============================
 st.sidebar.subheader("Cài đặt đầu vào")
 student_type = st.sidebar.selectbox("Loại sinh viên:", ("8 kỳ", "10 kỳ"))
-max_semester = 6 if student_type == "8 kỳ" else 8
+max_semester = 7 if student_type == "8 kỳ" else 9
 
 # Chọn kỳ hiện tại
 current_semester = st.sidebar.selectbox("Kỳ hiện tại:", list(range(1, max_semester + 1)))
@@ -46,7 +46,7 @@ else:
         # 3. Dự đoán Final CPA
         # =============================
         group_key_cpa = f"GPA_TC_1_{current_semester}" if current_semester > 1 else "GPA_TC_1"
-        cpa_model_path = f"models_streamlit/final_cpa_tc_{model_prefix}_ki.joblib"
+        cpa_model_path = f"models_final/fcpa_{model_prefix}_ki.joblib"
         cpa_dict = joblib.load(cpa_model_path)
 
         if group_key_cpa not in cpa_dict:
@@ -67,7 +67,7 @@ else:
         # =============================
         if current_semester < max_semester:
             group_key_gpa = f"GPA_{current_semester + 1}"  # Chú ý: đúng key theo file joblib đã lưu
-            next_gpa_path = f"models_streamlit/next_gpa_tc_{model_prefix}_ki.joblib"
+            next_gpa_path = f"models_final/ngpa_{model_prefix}_ki.joblib"
             next_dict = joblib.load(next_gpa_path)
 
             if group_key_gpa not in next_dict:
